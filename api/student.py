@@ -11,7 +11,9 @@ students_bp = Blueprint("students_bp", __name__, url_prefix="/students")
 @students_bp.route("/", methods=["GET"])
 def get_all_students():
     students = Student.query.all()
+    print(students)
     return jsonify({"students": [StudentReadModel.model_validate(s).model_dump(mode="json") for s in students]})
+
 
 @students_bp.route("/<int:pk>", methods=["GET"])
 def get_student_by_id(pk):
@@ -21,6 +23,12 @@ def get_student_by_id(pk):
 
     return jsonify(StudentReadModel.model_validate(student).model_dump(mode="json"))
 
+
+@students_bp.route("/search", methods=["GET"])
+def search_students():
+    name_query = request.args.get("name", "")
+    students = Student.query.filter(Student.name.ilike(f"%{name_query}%")).all()
+    return jsonify({"students": [StudentReadModel.model_validate(s).model_dump(mode="json") for s in students]})
 
 
 @students_bp.route("/<int:pk>", methods=["DELETE"])
@@ -48,9 +56,8 @@ def edit_student_by_id(pk):
     validated_data = StudentUpdateModel.model_validate(data)
     for field, value in validated_data.model_dump(exclude_none=True).items():
         if value is not None:
-            setattr(student, field, value)
+            setattr(student, field, value)  # Updates all fields, including course_name and photo_url
     db.session.commit()
-
 
     return jsonify(StudentReadModel.model_validate(student).model_dump(mode="json"))
 
@@ -67,6 +74,5 @@ def create_student_by_id():
 
     db.session.add(new_student)
     db.session.commit()
-
 
     return jsonify(StudentReadModel.model_validate(new_student).model_dump(mode="json")), 201

@@ -16,6 +16,12 @@
 <div class="container mt-4">
     <h2>Students List</h2>
 
+    <!-- Search bar -->
+    <div class="form-group mt-4">
+        <input type="text" id="searchName" class="form-control" placeholder="Search by name">
+        <button class="btn btn-primary mt-2" onclick="searchStudents()">Search</button>
+    </div>
+
     <!-- Add student form -->
     <div class="card mt-4">
         <div class="card-header">Add a New Student</div>
@@ -42,6 +48,8 @@
                 <th>Student Id</th>
                 <th>Name</th>
                 <th>Birth Date</th>
+                <th>Course Name</th>
+                <th>Photo</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -72,6 +80,14 @@
                 <label for="editStudentBirthDate">Birth Date:</label>
                 <input type="date" class="form-control" id="editStudentBirthDate" required>
             </div>
+            <div class="form-group">
+                <label for="editStudentCourseName">Course Name:</label>
+                <input type="text" class="form-control" id="editStudentCourseName">
+            </div>
+            <div class="form-group">
+                <label for="editStudentPhoto">Photo:</label>
+                <input type="file" class="form-control" id="editStudentPhoto" accept="image/*">
+            </div>
         </form>
       </div>
       <div class="modal-footer">
@@ -91,6 +107,8 @@
             $('#editStudentId').val(data.student_id);
             $('#editStudentName').val(data.name);
             $('#editStudentBirthDate').val(data.birth_date);
+            $('#editStudentCourseName').val(data.course_name);
+            $('#editStudentPhoto').val(data.photo_url);
             $('#editStudentModal').modal('show');
         });
     }
@@ -98,7 +116,9 @@
     function submitEditStudent() {
         const updatedStudent = {
             name: $('#editStudentName').val(),
-            birth_date: $('#editStudentBirthDate').val()
+            birth_date: $('#editStudentBirthDate').val(),
+            course_name: $('#editStudentCourseName').val(), 
+            photo_url: $('#editStudentPhoto').val()
         };
 
         const studentId = $('#editStudentId').val();
@@ -115,18 +135,43 @@
         });
     }
 
+    // Search students by name
+    function searchStudents() {
+        const name = $('#searchName').val();
+        $.getJSON(`/students/search?name=${name}`, function(data) {
+            $('#studentsList').empty();
+            data.students.forEach(student => {
+                const photoUrl = student.photo_url || '/static/images/placeholder.png'; // Use a local placeholder image
+                $('#studentsList').append(`
+                    <tr>
+                        <td>${student.student_id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.birth_date}</td>
+                        <td>${student.course_name || 'N/A'}</td>
+                        <td><img src="${photoUrl}" alt="Student Photo" width="50" height="50"></td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="updateStudent(${student.student_id})">Update</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteStudent(${student.student_id})">Delete</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        });
+    }
 
     // Fetch all students and display them
     function fetchStudents() {
         $.getJSON('/students', function(data) {
             $('#studentsList').empty();
             data.students.forEach(student => {
+                const photoUrl = student.photo_url || '/static/images/placeholder.png'; // Use a local placeholder image
                 $('#studentsList').append(`
                     <tr>
-
                         <td>${student.student_id}</td>
                         <td>${student.name}</td>
                         <td>${student.birth_date}</td>
+                        <td>${student.course_name || 'N/A'}</td>
+                        <td><img src="${photoUrl}" alt="Student Photo" width="50" height="50"></td>
                         <td>
                             <button class="btn btn-warning btn-sm" onclick="updateStudent(${student.student_id})">Update</button>
                             <button class="btn btn-danger btn-sm" onclick="deleteStudent(${student.student_id})">Delete</button>
@@ -142,7 +187,9 @@
         e.preventDefault();
         const newStudent = {
             name: $('#name').val(),
-            birth_date: $('#birth_date').val()
+            birth_date: $('#birth_date').val(),
+            course_name: $('#course_name').val(),
+            photo_url: $('#photo_url').val()
         };
         $.ajax({
             url: '/students',

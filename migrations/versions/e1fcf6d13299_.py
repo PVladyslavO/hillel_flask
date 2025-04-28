@@ -24,6 +24,8 @@ def upgrade():
     sa.Column('birth_date', sa.Date(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.add_column('students', sa.Column('course_name', sa.String(), nullable=True))
+    op.add_column('students', sa.Column('photo_url', sa.String(), nullable=True))
     # ### end Alembic commands ###
 
 
